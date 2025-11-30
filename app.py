@@ -137,14 +137,14 @@ with st.sidebar:
     deal = st.number_input(
     "Deal Size ($M)",
     value=50.0,
-    min_value=0,
+    min_value=0.0,
     max_value=1_000_000_000.0,
 )
     growth = st.number_input(
     "Growth YoY",
     value=0.35,
-    min_value=0,
-    max_value=1,
+    min_value=0.0,
+    max_value=1.0,
 )
     desc = st.text_area("Description", "AI workflow automation platform.")
 
