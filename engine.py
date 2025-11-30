@@ -10,16 +10,16 @@ from anthropic import Anthropic
 # Load API key from Streamlit secrets
 client = Anthropic(api_key=st.secrets["ANTHROPIC_API_KEY"])
 
-
 # ===================================================================
 # STEP 1: DATA PIPELINE & EMBEDDINGS
 # ===================================================================
 
 class InvestorDataPipeline:
     def __init__(self, csv_path: str):
+        # Load the CSV with [Complete] in the name
         self.df = pd.read_csv(csv_path)
         self.investor_embeddings = {}
-        self.vectorizer = Tfididfector(max_features=500, ngram_range=(1, 2))
+        self.vectorizer = TfidfVectorizer(max_features=500, ngram_range=(1, 2))
         self.investor_fingerprint_vectors = {}
         self._clean_data()
 
@@ -30,7 +30,6 @@ class InvestorDataPipeline:
             .str.replace(r'[\r\n]+', ' ', regex=True)
             .str.strip()
         )
-
         self.df['Business_Overview'] = self.df['Business_Overview'].fillna('')
         self.df['Competitive Analysis '] = self.df['Competitive Analysis '].fillna('')
 
@@ -52,7 +51,6 @@ class InvestorDataPipeline:
     def create_investor_fingerprint(self, investor_name: str) -> str:
         investor_deals = self.df[self.df['Investor_Name'] == investor_name]
         parts = []
-
         companies = investor_deals['Portfolio_Company'].unique()
         industries = investor_deals['Industry'].unique()
         parts.append(f"Portfolio: {', '.join(companies)}")
@@ -104,7 +102,7 @@ class InvestorDataPipeline:
 
 
 # ===================================================================
-# STEP 2: LANGGRAPH-STYLE LLM REASONING
+# STEP 2: LANGGRAPH LLM REASONING
 # ===================================================================
 
 class GraphState(TypedDict):
@@ -120,7 +118,6 @@ class InvestorMatchingGraph:
         self.client = client
 
     def fetch_investor_web_context(self, investor_name: str) -> str:
-        """Simulated web search using Claude"""
         prompt = f"""
 Perform a brief web-search style lookup for:
 
@@ -143,7 +140,6 @@ Return 3–6 sentences summarizing:
         except:
             return "(Web context unavailable)"
 
-    # Node 1: Embedding retrieval
     def retrieve_candidates(self, state: GraphState) -> GraphState:
         startup_text = f"{state['startup_profile']['industry']} {state['startup_profile']['description']}"
         startup_vector = self.data.vectorizer.transform([startup_text]).toarray()[0]
@@ -153,15 +149,14 @@ Return 3–6 sentences summarizing:
             s = self.data.calculate_embedding_similarity(startup_vector, investor)
             scores.append({"investor_name": investor, "embedding_likelihood": s})
 
-        scores.sort(key=lambda x: x['embedding_likelihood'], reverse=True)
-        state['candidate_investors'] = scores[:3]
+        scores.sort(key=lambda x: x["embedding_likelihood"], reverse=True)
+        state["candidate_investors"] = scores[:3]
         return state
 
-    # Node 2: LLM reasoning
     def reason_about_fit(self, state: GraphState) -> GraphState:
-        startup = state['startup_profile']
+        startup = state["startup_profile"]
 
-        for cand in state['candidate_investors']:
+        for cand in state["candidate_investors"]:
             name = cand["investor_name"]
             inv_context = self.data.investor_embeddings[name]["context"]
             web_context = self.fetch_investor_web_context(name)
@@ -205,7 +200,6 @@ Return JSON:
 
         return state
 
-    # Node 3: Final ranking
     def rank_investors(self, state: GraphState) -> GraphState:
         for cand in state["candidate_investors"]:
             final_score = cand["embedding_likelihood"] + cand["llm_adjustment"]
@@ -214,7 +208,6 @@ Return JSON:
         state["ranked_results"] = sorted(
             state["candidate_investors"], key=lambda x: x["final_score"], reverse=True
         )
-
         return state
 
     def run_pipeline(self, startup_profile: Dict):
