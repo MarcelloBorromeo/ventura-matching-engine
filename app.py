@@ -84,31 +84,6 @@ st.markdown("""
         margin-top: -4px;
     }
 
-    /* Table Styling */
-    table {
-        border-collapse: collapse !important;
-        width: 100% !important;
-        border: 1.5px solid #AFCBFF !important;
-    }
-    th {
-        background-color: #167DFF !important;
-        color: white !important;
-        text-align: center !important;
-        font-size: 17px !important;
-        padding: 10px !important;
-    }
-    td {
-        background-color: #FFFFFF !important;
-        color: #0E3A75 !important;
-        padding: 10px !important;
-        font-size: 16px !important;
-    }
-
-    /* Center Match Score Column */
-    td:nth-child(2) {
-        text-align: center !important;
-    }
-
     /* Button Styling */
     .stButton>button {
         background: #167DFF;
@@ -194,28 +169,68 @@ if st.button("Run Matching"):
     done_msg = st.empty()
     done_msg.markdown("<div class='progress-text' style='color:green;'>✔ Done</div>", unsafe_allow_html=True)
 
-    # Fades away
     time.sleep(2)
     done_msg.empty()
 
     # -----------------------------------------------------------
-    # Top 3 MATCHES TABLE
+    # Top 3 MATCHES TABLE — NEW VERSION
     # -----------------------------------------------------------
     st.markdown("<div class='section-header'>Top 3 Matches</div>", unsafe_allow_html=True)
 
     df = pd.DataFrame(results)
 
-    st.dataframe(
-        df[["investor", "final"]].rename(columns={
-            "investor": "Investor",
-            "final": "Match Score"
-        }),
-        use_container_width=True
-    )
+    table_html = """
+    <style>
+        .match-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+            background: rgba(255, 255, 255, 0.80);
+            backdrop-filter: blur(6px);
+            border-radius: 12px;
+            overflow: hidden;
+            border: 1.5px solid #AFCBFF;
+            box-shadow: 0 4px 14px rgba(0,0,0,0.05);
+        }
+        .match-table th {
+            background-color: #167DFF;
+            color: white;
+            font-size: 18px;
+            font-weight: 700;
+            padding: 14px;
+            text-align: center;
+        }
+        .match-table td {
+            padding: 14px;
+            text-align: center;
+            font-size: 17px;
+            color: #0E3A75;
+            font-weight: 600;
+        }
+    </style>
+
+    <table class="match-table">
+        <tr>
+            <th>Investor</th>
+            <th>Match Score</th>
+        </tr>
+    """
+
+    for _, row in df.iterrows():
+        table_html += f"""
+            <tr>
+                <td><strong>{row['investor']}</strong></td>
+                <td><strong>{row['final']}</strong></td>
+            </tr>
+        """
+
+    table_html += "</table>"
+
+    st.markdown(table_html, unsafe_allow_html=True)
 
 
     # -----------------------------------------------------------
-    # Reasoning Cards (Justified + Border)
+    # Reasoning Cards
     # -----------------------------------------------------------
     st.markdown("<div class='section-header'>Reasoning</div>", unsafe_allow_html=True)
 
