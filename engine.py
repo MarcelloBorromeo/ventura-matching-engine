@@ -16,11 +16,7 @@ def or_chat(model: str, messages: List[Dict], api_key: str, max_tokens: int = 30
         "Authorization": f"Bearer {api_key}",
         "Content-Type": "application/json",
     }
-    payload = {
-        "model": model,
-        "messages": messages,
-        "max_tokens": max_tokens,
-    }
+    payload = {"model": model, "messages": messages, "max_tokens": max_tokens}
     resp = requests.post(url, headers=headers, json=payload, timeout=60)
 
     if resp.status_code != 200:
@@ -42,7 +38,8 @@ class InvestorDataPipeline:
 
     def _clean_data(self):
         self.df["Investor_Name"] = (
-            self.df["Investor_Name"].astype(str)
+            self.df["Investor_Name"]
+            .astype(str)
             .str.replace(r"[\r\n]+", " ", regex=True)
             .str.strip()
         )
@@ -113,24 +110,24 @@ class InvestorMatchingGraph:
             })
 
         scores.sort(key=lambda x: x["embedding"], reverse=True)
-        state["candidates"] = scores[:3]     # <<— TOP 3 ONLY
+        state["candidates"] = scores[:3]
         return state
 
     # ------------------------------------------------------------
     def fetch_web(self, investor):
         sys_prompt = (
-            "Return 2 short bullet points (<=10 words each)"
-            " describing this investor's focus, stage, or check size."
+            "Return 2 short bullet points (<=10 words each) "
+            "describing this investor's focus, stage, or check size."
         )
         try:
             return or_chat(
                 self.model,
                 [
                     {"role": "system", "content": sys_prompt},
-                    {"role": "user", "content": f"Investor: {investor}"}
+                    {"role": "user", "content": f"Investor: {investor}"},
                 ],
                 self.key,
-                max_tokens=120
+                max_tokens=120,
             )
         except Exception as e:
             return f"(web unavailable: {e})"
@@ -147,7 +144,7 @@ class InvestorMatchingGraph:
             system_msg = (
                 "You are a concise VC analyst. Write one paragraph (max 4 sentences) "
                 "explaining the investor–startup fit using evidence from the embedding score, "
-                "dataset context, and web summary. Be specific, insightful, and avoid generic language."
+                "dataset context, and web summary."
             )
 
             user_msg = (
@@ -163,14 +160,14 @@ class InvestorMatchingGraph:
                     self.model,
                     [
                         {"role": "system", "content": system_msg},
-                        {"role": "user", "content": user_msg}
+                        {"role": "user", "content": user_msg},
                     ],
                     self.key,
-                    max_tokens=220
+                    max_tokens=220,
                 )
                 c["explanation"] = explanation.strip()
                 c["web"] = web
-                c["final"] = c["embedding"]  # no adjustment
+                c["final"] = c["embedding"]
             except Exception as e:
                 c["explanation"] = f"(LLM error: {e})"
                 c["web"] = web
@@ -184,7 +181,7 @@ class InvestorMatchingGraph:
         return state
 
     # ------------------------------------------------------------
-    def run(self, startup, progress_callback):
+    def run(self, startup, progress_callback, use_llm=True):
         state = GraphState(
             startup=startup,
             investors=list(self.data.investor_vectors.keys()),
@@ -195,11 +192,18 @@ class InvestorMatchingGraph:
         progress_callback("Retrieving candidates…")
         state = self.retrieve(state)
 
-        progress_callback("Analyzing fit…")
-        state = self.reason(state)
+        if use_llm:
+            progress_callback("Analyzing fit…")
+            state = self.reason(state)
+        else:
+            # Skip LLM usage
+            for c in state["candidates"]:
+                c["explanation"] = "(AI explanation disabled)"
+                c["web"] = ""
+                c["final"] = c["embedding"]
 
         progress_callback("Ranking…")
         state = self.rank(state)
 
-        progress_callback("✅ Done")
+        progress_callback("✔ Done")
         return state["ranked"]
