@@ -207,6 +207,7 @@ if st.button("Run Matching"):
     color: white;
     font-size: 18px;
     padding: 14px;
+    text-align: center;
 }
 .match-table td {
     padding: 14px;
