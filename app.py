@@ -11,37 +11,30 @@ st.markdown("""
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;600;700;800;900&family=Open+Sans:wght@300;400;600;700&display=swap" rel="stylesheet">
 
 <style>
-/* GLOBAL FONT OVERRIDES */
 html, body, div, span, textarea, input, button {
     font-family: 'Open Sans', sans-serif !important;
 }
 
-/* Heading classes use Montserrat */
 .main-title, .section-header, .investor-name, .stButton>button {
     font-family: 'Montserrat', sans-serif !important;
 }
 
-/* Global Background */
 body, .stApp {
     background: linear-gradient(180deg, #E8F1FF 0%, #FFFFFF 60%) !important;
 }
 
-/* Container Width */
 .block-container {
     max-width: 1000px !important;
 }
 
-/* Title */
 .main-title {
     text-align: center;
     font-size: 46px !important;
     font-weight: 800 !important;
     color: #000000 !important;
     margin-bottom: 5px;
-    opacity: 0.90;
 }
 
-/* Subtitle */
 .subheader {
     text-align: center;
     font-size: 20px;
@@ -49,16 +42,13 @@ body, .stApp {
     margin-bottom: 20px;
 }
 
-/* Section Header */
 .section-header {
     font-size: 26px !important;
     font-weight: 700 !important;
     color: #0E3A75 !important;
     margin-top: 10px;
-    margin-bottom: 8px;
 }
 
-/* Glass Card Style */
 .card {
     background: rgba(255, 255, 255, 0.75);
     backdrop-filter: blur(8px);
@@ -73,14 +63,12 @@ body, .stApp {
     font-size: 22px;
     font-weight: 700;
     color: #167DFF;
-    margin-bottom: 10px;
 }
 
 .explanation {
     text-align: justify;
     color: #0E3A75;
     font-size: 16px;
-    line-height: 1.55;
     margin-bottom: 12px;
 }
 
@@ -88,26 +76,21 @@ body, .stApp {
     font-size: 14px;
     color: #167DFF;
     font-weight: 600;
-    margin-top: -4px;
 }
 
-/* Buttons */
 .stButton>button {
     background: #167DFF;
     color: white;
     border-radius: 8px;
     height: 50px;
     width: 100%;
-    border: none;
     font-size: 18px;
     font-weight: 700 !important;
-    transition: 0.2s;
 }
 .stButton>button:hover {
     background: #0E3A75;
 }
 
-/* Progress text */
 .progress-line {
     display: flex;
     align-items: center;
@@ -134,7 +117,7 @@ body, .stApp {
 """, unsafe_allow_html=True)
 
 # -----------------------------------------------------------
-# Page Title
+# Title
 # -----------------------------------------------------------
 st.markdown("<h1 class='main-title'>Venture Investor Matching Engine</h1>", unsafe_allow_html=True)
 st.markdown("<div class='subheader'>IEC-powered precision investor recommendations</div>", unsafe_allow_html=True)
@@ -152,31 +135,18 @@ def load_engine():
 engine = load_engine()
 
 # -----------------------------------------------------------
-# Sidebar Inputs
+# Sidebar
 # -----------------------------------------------------------
 with st.sidebar:
     st.header("Startup Profile")
 
     industry = st.text_input("Industry", "Software")
-
-    deal = st.number_input(
-        "Deal Size ($M)",
-        value=50.0,
-        min_value=0.0,
-        max_value=1_000_000_000.0,
-    )
-
-    growth = st.number_input(
-        "Growth YoY",
-        value=0.35,
-        min_value=0.0,
-        max_value=1.0,
-    )
-
+    deal = st.number_input("Deal Size ($M)", value=50.0)
+    growth = st.number_input("Growth YoY", value=0.35)
     desc = st.text_area("Description", "AI workflow automation platform.")
 
 # -----------------------------------------------------------
-# Matching Logic
+# Run Matching
 # -----------------------------------------------------------
 if st.button("Run Matching"):
 
@@ -185,12 +155,12 @@ if st.button("Run Matching"):
     def update_step(text):
         step_display.markdown(
             f"""
-            <div class="progress-line">
-                <div class="loader"></div>
-                <span>{text}</span>
-            </div>
+<div class="progress-line">
+    <div class="loader"></div>
+    <span>{text}</span>
+</div>
             """,
-            unsafe_allow_html=True
+            unsafe_allow_html=True,
         )
 
     with st.spinner("Running investor matching pipeline…"):
@@ -201,86 +171,83 @@ if st.button("Run Matching"):
                 "revenue_growth_yoy": growth,
                 "description": desc,
             },
-            progress_callback=update_step
+            progress_callback=update_step,
         )
 
-        # Success message
         done_msg = st.empty()
         done_msg.markdown(
             "<div class='progress-line' style='color:green;'>✔ Done</div>",
-            unsafe_allow_html=True
+            unsafe_allow_html=True,
         )
         time.sleep(2)
         done_msg.empty()
 
     # -----------------------------------------------------------
-    # Top 3 MATCHES TABLE
+    # Top 3 MATCHES TABLE (PATCHED — HTML LEFT-ALIGNED)
     # -----------------------------------------------------------
     st.markdown("<div class='section-header'>Top 3 Matches</div>", unsafe_allow_html=True)
 
     df = pd.DataFrame(results)
 
+    # *** IMPORTANT — MUST BE LEFT-ALIGNED ***
     table_html = """
-    <style>
-    .match-table {
-        width: 100%;
-        border-collapse: collapse;
-        margin-top: 10px;
-        background: rgba(255, 255, 255, 0.80);
-        backdrop-filter: blur(6px);
-        border-radius: 12px;
-        overflow: hidden;
-        border: 1.5px solid #AFCBFF;
-        box-shadow: 0 4px 14px rgba(0,0,0,0.05);
-        font-family: 'Open Sans', sans-serif !important;
-    }
-    .match-table th {
-        background-color: #167DFF;
-        color: white;
-        font-size: 18px;
-        font-weight: 700;
-        padding: 14px;
-        text-align: center;
-        font-family: 'Montserrat', sans-serif !important;
-    }
-    .match-table td {
-        padding: 14px;
-        text-align: center;
-        font-size: 17px;
-        color: #0E3A75;
-        font-weight: 600;
-    }
-    </style>
+<style>
+.match-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 10px;
+    background: rgba(255, 255, 255, 0.80);
+    border-radius: 12px;
+    overflow: hidden;
+    border: 1.5px solid #AFCBFF;
+    font-family: 'Open Sans', sans-serif !important;
+}
+.match-table th {
+    background-color: #167DFF;
+    color: white;
+    font-size: 18px;
+    padding: 14px;
+}
+.match-table td {
+    padding: 14px;
+    text-align: center;
+    font-size: 17px;
+    color: #0E3A75;
+}
+</style>
 
-    <table class="match-table">
-        <tr>
-            <th>Investor</th>
-            <th>Match Score</th>
-        </tr>
-    """
+<table class="match-table">
+<tr>
+    <th>Investor</th>
+    <th>Match Score</th>
+</tr>
+"""
 
     for _, row in df.iterrows():
         table_html += f"""
-        <tr>
-            <td><strong>{row['investor']}</strong></td>
-            <td><strong>{row['final']}</strong></td>
-        </tr>
-        """
+<tr>
+    <td><strong>{row['investor']}</strong></td>
+    <td><strong>{row['final']}</strong></td>
+</tr>
+"""
 
     table_html += "</table>"
 
     st.markdown(table_html, unsafe_allow_html=True)
 
     # -----------------------------------------------------------
-    # Reasoning Cards
+    # Reasoning
     # -----------------------------------------------------------
     st.markdown("<div class='section-header'>Reasoning</div>", unsafe_allow_html=True)
 
     for r in results:
-        st.markdown(f"""
-        <div class='card'>
-            <div class='investor-name'>{r['investor']}</div>
-            <div class='explanation'>{r['explanation']}</div>
-            <div class='web-summary'><strong>Web Summary:</strong> {r['web']}</div>
-        </div>
-        """, unsafe_allow_html=True)
+        st.markdown(
+            f"""
+<div class='card'>
+    <div class='investor-name'>{r['investor']}</div>
+    <div class='explanation'>{r['explanation']}</div>
+    <div class='web-summary'><strong>Web Summary:</strong> {r['web']}</div>
+</div>
+""",
+            unsafe_allow_html=True,
+        )
