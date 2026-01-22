@@ -24,6 +24,8 @@ The engine leverages a dataset of historical VC-backed IPOs.
 * **Vectorization:** Using `TfidfVectorizer`, these fingerprints are transformed into high-dimensional vectors.
 * **Similarity Scoring:** When a startup profile is entered, the engine calculates the Cosine Similarity between the startup's vector and the investor pool:
 
+$$\text{score} = \frac{\mathbf{v}_{startup} \cdot \mathbf{v}_{investor}}{\|\mathbf{v}_{startup}\| \|\mathbf{v}_{investor}\|}$$
+
 ### 2. The Decision Graph (InvestorMatchingGraph)
 
 Ventura uses a multi-stage graph process to move from raw data to actionable insights:
