@@ -1,3 +1,6 @@
+<img width="1512" height="935" alt="IEC Ventura 3" src="https://github.com/user-attachments/assets/9a5c9d92-8ae3-4687-9722-3d3e0f653abb" />
+<img width="1512" height="938" alt="IEC Ventura 4" src="https://github.com/user-attachments/assets/7b9945fe-0a21-4dbf-b5b4-be3985555c8d" />
+
 # Ventura: MVP Investor Matching Engine
 
 **Ventura** is the Minimum Viable Product (MVP) engineered for **International Elite Capital (IEC)** to validate an AI-driven approach to venture capital deal flow. This engine was built to replace manual, high-cost intermediation with a scalable, automated system capable of vetting startups against institutional investment theses.
